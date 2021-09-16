@@ -76,7 +76,22 @@ exports.addUser = addUser;
  */
 // eslint-disable-next-line camelcase
 const getAllReservations = function (guest_id, limit = 10) {
-  return getAllProperties(null, 2);
+  return pool
+    .query(
+      `SELECT reservations.*, properties.*, ROUND(AVG(rating)) as average_rating
+  FROM reservations
+  JOIN properties ON properties.id = reservations.property_id
+  JOIN property_reviews ON property_reviews.property_id = properties.id
+  WHERE reservations.guest_id = $1 AND end_date <= now()::date
+  GROUP BY reservations.id, properties.id
+  ORDER BY reservations.start_date
+  LIMIT $2`,
+      [guest_id, limit]
+    )
+    .then((res) => {
+      console.log(res.rows);
+      return res.rows;
+    });
 };
 exports.getAllReservations = getAllReservations;
 
